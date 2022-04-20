@@ -23,11 +23,19 @@ public class MainActivity extends AppCompatActivity {
     String mCurrentPhotoPath;
     private ArrayList<String> photos = null;
     private int index = 0;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        photos = findPhotos();
+        if (photos == null) {
+            displayPhoto(null);
+        } else {
+            displayPhoto(photos.get(index));
+        }
     }
+
     public void takePhoto(View v) {
         Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
         if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
@@ -35,7 +43,7 @@ public class MainActivity extends AppCompatActivity {
             try {
                 photoFile = createImageFile();
             } catch (IOException ex) {
-            // Error occurred while creating the File
+                // Error occurred while creating the File
             }
             // Continue only if the File was successfully created
             if (photoFile != null) {
@@ -45,6 +53,7 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     }
+
     private ArrayList<String> findPhotos() {
         File file = new File(Environment.getExternalStorageDirectory()
                 .getAbsolutePath(), "/Android/data/com.comp7082.group1.assignment1/files/Pictures");
@@ -57,6 +66,7 @@ public class MainActivity extends AppCompatActivity {
         }
         return photos;
     }
+
     public void scrollPhotos(View v) {
         if(photos == null) return;
         updatePhoto(photos.get(index), ((EditText) findViewById(R.id.etCaption)).getText().toString());
@@ -70,20 +80,21 @@ public class MainActivity extends AppCompatActivity {
                 break;
             case R.id.btnNext:
                 if (index < (photos.size()-1)) {
-                index++;
-            }
-            break;
+                    index++;
+                }
+                break;
             default:
                 break;
         }
 
         displayPhoto(photos.get(index));
     }
+
     private void displayPhoto(String path) {
         ImageView iv = (ImageView) findViewById(R.id.ivGallery);
         TextView tv = (TextView) findViewById(R.id.tvTimestamp);
         EditText et = (EditText) findViewById(R.id.etCaption);
-        if (path == null || path =="") {
+        if (path == null || path == "") {
             iv.setImageResource(R.mipmap.ic_launcher);
             et.setText("Description");
             tv.setText("Date and time");
@@ -94,6 +105,7 @@ public class MainActivity extends AppCompatActivity {
             et.setText(attr[3]);
         }
     }
+
     private File createImageFile() throws IOException {
 // Create an image file name
         String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
@@ -112,13 +124,13 @@ public class MainActivity extends AppCompatActivity {
             from.renameTo(to);
         }
     }
+
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK) {
             ImageView mImageView = (ImageView) findViewById(R.id.ivGallery);
             mImageView.setImageBitmap(BitmapFactory.decodeFile(mCurrentPhotoPath));
-            displayPhoto(mCurrentPhotoPath);
             photos = findPhotos();
         }
     }
