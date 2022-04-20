@@ -1,4 +1,4 @@
-package com.comp7082.group1.assignment1;
+package com.example.sprint1_assign;
 
 import org.junit.Test;
 

@@ -1,4 +1,4 @@
-package com.comp7082.group1.assignment1;
+package com.example.sprint1_assign;
 
 import android.content.Context;
 
@@ -21,6 +21,6 @@ public class ExampleInstrumentedTest {
     public void useAppContext() {
         // Context of the app under test.
         Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
-        assertEquals("com.comp7082.group1.assignment1", appContext.getPackageName());
+        assertEquals("com.example.sprint1_assign", appContext.getPackageName());
     }
 }
