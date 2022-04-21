@@ -71,9 +71,9 @@ public class Sprint1Test {
         onView(withId(R.id.btnSearch)).perform(click());
         onView(withId(R.id.etFromDateTime)).perform(clearText(), typeText("2022-01-01 00:00:00"), closeSoftKeyboard());
         onView(withId(R.id.etToDateTime)).perform(clearText(), typeText("2022-04-20 00:00:00"), closeSoftKeyboard());
-        onView(withId(R.id.etKeywords)).perform(typeText("test caption"), closeSoftKeyboard());
+        onView(withId(R.id.etKeywords)).perform(typeText("Description"), closeSoftKeyboard());
         onView(withId(R.id.go)).perform(click());
-        onView(withId(R.id.etCaption)).check(matches(withText("test caption")));
+        onView(withId(R.id.etCaption)).check(matches(withText("Description")));
         //onView(withId(R.id.btnRight)).perform(click());
         //onView(withId(R.id.btnLeft)).perform(click());
     }
@@ -84,9 +84,9 @@ public class Sprint1Test {
         onView(withId(R.id.btnSearch)).perform(click());
         onView(withId(R.id.etFromDateTime)).perform(clearText(), typeText("2022-01-01 00:00:00"), closeSoftKeyboard());
         onView(withId(R.id.etToDateTime)).perform(clearText(), typeText("2022-04-20 00:00:00"), closeSoftKeyboard());
-        onView(withId(R.id.etKeywords)).perform(typeText("test caption"), closeSoftKeyboard());
+        onView(withId(R.id.etKeywords)).perform(typeText("Description"), closeSoftKeyboard());
         onView(withId(R.id.go)).perform(click());
-        onView(withId(R.id.etCaption)).check(matches(withText("test caption")));
+        onView(withId(R.id.etCaption)).check(matches(withText("Description")));
         //onView(withId(R.id.btnRight)).perform(click());
         //onView(withId(R.id.btnLeft)).perform(click());
     }
@@ -97,9 +97,9 @@ public class Sprint1Test {
         onView(withId(R.id.btnSearch)).perform(click());
         onView(withId(R.id.etFromDateTime)).perform(clearText(), typeText("2022-01-01 00:00:00"), closeSoftKeyboard());
         onView(withId(R.id.etToDateTime)).perform(clearText(), typeText("2022-04-20 00:00:00"), closeSoftKeyboard());
-        onView(withId(R.id.etKeywords)).perform(typeText("test caption"), closeSoftKeyboard());
+        onView(withId(R.id.etKeywords)).perform(typeText("Description"), closeSoftKeyboard());
         onView(withId(R.id.go)).perform(click());
-        onView(withId(R.id.etCaption)).check(matches(withText("test caption")));
+        onView(withId(R.id.etCaption)).check(matches(withText("Description")));
         //onView(withId(R.id.btnRight)).perform(click());
         //onView(withId(R.id.btnLeft)).perform(click());
     }
