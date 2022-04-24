@@ -24,6 +24,7 @@ import java.util.Date;
 
 public class MainActivity extends AppCompatActivity {
     static final int REQUEST_IMAGE_CAPTURE = 1;
+    static final int SEARCH_ACTIVITY_REQUEST_CODE = 2;
     String mCurrentPhotoPath;
     private ArrayList<String> photos = null;
     private int index = 0;
@@ -33,7 +34,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         photos = findPhotos(new Date(Long.MIN_VALUE), new Date(), "");
-        if (photos == null) {
+        if (photos.size() == 0) {
             displayPhoto(null);
         } else {
             displayPhoto(photos.get(index));
@@ -72,35 +73,34 @@ public class MainActivity extends AppCompatActivity {
                         photos.add(f.getPath());
                 }
             }
-        }catch(Exception ex){
+        } catch (Exception ex){
 //            Crashes after photo taken
         }
         return photos;
     }
 
     public void scrollPhotos(View v) {
-//        if(photos == null) return;
-        if (photos.size() != 0) {
-            updatePhoto(photos.get(index), ((EditText) findViewById(R.id.etCaption)).getText().toString());
-        }
-//        photos.clear();
-//        photos = findPhotos();
-        switch (v.getId()) {
+         switch (v.getId()) {
             case R.id.btnPrev:
                 if (index > 0) {
                     index--;
+                    updatePhoto(photos.get(index), ((EditText) findViewById(R.id.etCaption)).getText().toString());
                 }
                 break;
             case R.id.btnNext:
                 if (index < (photos.size() - 1)) {
                     index++;
+                    updatePhoto(photos.get(index), ((EditText) findViewById(R.id.etCaption)).getText().toString());
                 }
                 break;
             default:
                 break;
         }
-
-        displayPhoto(photos.get(index));
+        if (photos.size() == 0) {
+            displayPhoto(null);
+        } else {
+            displayPhoto(photos.get(index));
+        }
     }
 
     private void displayPhoto(String path) {
@@ -131,53 +131,58 @@ public class MainActivity extends AppCompatActivity {
 
     private void updatePhoto(String path, String caption) {
         String[] attr = path.split("_");
-        Toast t2 = Toast.makeText(this, "" + index, Toast.LENGTH_LONG);
-        t2.show();
         if (attr.length >= 4) {
             File to = new File(attr[0] + "_" + attr[1] + "_" + attr[2] + "_" + caption + "_" + attr[4]);
             File from = new File(path);
             from.renameTo(to);
-            Toast t1 = Toast.makeText(this, "" + from.renameTo(to), Toast.LENGTH_LONG);
-//            t1.show();
             photos.set(index, attr[0] + "_" + attr[1] + "_" + attr[2] + "_" + caption + "_" + attr[4]);
         }
     }
 
     public void launchSearchActivity(View view) {
         Intent i = new Intent(this, SearchActivity.class);
-        startActivityForResult(i, 345);
+        startActivityForResult(i, SEARCH_ACTIVITY_REQUEST_CODE);
     }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (resultCode == RESULT_OK) {
-            DateFormat format = new SimpleDateFormat("yyyy‐MM‐dd HH:mm:ss");
-            Date startTimestamp, endTimestamp;
-            try {
-                String from = (String) data.getStringExtra("STARTTIMESTAMP");
-                String to = (String) data.getStringExtra("ENDTIMESTAMP");
-                startTimestamp = format.parse(from);
-                endTimestamp = format.parse(to);
-            } catch (Exception ex) {
-                startTimestamp = null;
-                endTimestamp = null;
-            }
-            String keywords = (String) data.getStringExtra("KEYWORDS");
-            index = 0;
-            photos = findPhotos(startTimestamp, endTimestamp, keywords);
-            if (photos.size() == 0) {
-                displayPhoto(null);
-            } else {
-                displayPhoto(photos.get(index));
+        if (requestCode == SEARCH_ACTIVITY_REQUEST_CODE) {
+            if (resultCode == RESULT_OK) {
+                DateFormat format = new SimpleDateFormat("yyyy‐MM‐dd HH:mm:ss");
+                Date startTimestamp, endTimestamp;
+                try {
+                    String from = (String) data.getStringExtra("STARTTIMESTAMP");
+                    String to = (String) data.getStringExtra("ENDTIMESTAMP");
+                    startTimestamp = format.parse(from);
+                    endTimestamp = format.parse(to);
+                } catch (Exception ex) {
+                    startTimestamp = null;
+                    endTimestamp = null;
+                }
+                String keywords = (String) data.getStringExtra("KEYWORDS");
+                index = 0;
+                photos = findPhotos(startTimestamp, endTimestamp, keywords);
+                if (photos.size() == 0) {
+                    displayPhoto(null);
+                } else {
+                    displayPhoto(photos.get(index));
+                }
             }
         }
 
         if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK) {
-            index = photos.size();
             ImageView mImageView = (ImageView) findViewById(R.id.ivGallery);
             mImageView.setImageBitmap(BitmapFactory.decodeFile(mCurrentPhotoPath));
             photos = findPhotos(new Date(Long.MIN_VALUE), new Date(), "");
+        }
+
+        // Deletes auto-generated image file if photo was not taken
+        if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_CANCELED) {
+            File file = new File(Environment.getExternalStorageDirectory()
+                    .getAbsolutePath(), "/Android/data/com.comp7082.group1.assignment1/files/Pictures");
+            File[] fList = file.listFiles();
+            fList[fList.length - 1].delete();
         }
     }
 }
