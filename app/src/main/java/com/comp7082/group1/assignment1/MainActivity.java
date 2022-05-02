@@ -3,8 +3,11 @@ package com.comp7082.group1.assignment1;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.FileProvider;
 
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.BitmapFactory;
+import android.location.Location;
+import android.location.LocationManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
@@ -47,6 +50,13 @@ public class MainActivity extends AppCompatActivity {
             File photoFile = null;
             try {
                 photoFile = createImageFile();
+
+                LocationManager lm = (LocationManager)getSystemService(Context.LOCATION_SERVICE);
+                Location location = lm.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+                double longitude = location.getLongitude();
+                double latitude = location.getLatitude();
+
+                Toast.makeText(this, latitude + "" + longitude, Toast.LENGTH_SHORT).show();
             } catch (IOException ex) {
                 // Error occurred while creating the File
             }
