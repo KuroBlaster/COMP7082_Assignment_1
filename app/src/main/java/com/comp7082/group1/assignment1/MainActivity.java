@@ -185,4 +185,15 @@ public class MainActivity extends AppCompatActivity {
             fList[fList.length - 1].delete();
         }
     }
+
+    public void sharePhoto(View view) {
+        Toast.makeText(this, "Share Photo",
+                Toast.LENGTH_LONG).show();
+        Intent shareIntent = new Intent();
+        shareIntent.setAction(Intent.ACTION_SEND);
+        shareIntent.putExtra(Intent.EXTRA_STREAM, photos.get(index));
+        shareIntent.setType("image/jpg");
+        startActivity(Intent.createChooser(shareIntent, null));
+    }
+
 }
