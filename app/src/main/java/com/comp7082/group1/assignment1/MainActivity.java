@@ -4,6 +4,9 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.FileProvider;
 
 import android.content.Intent;
+import android.content.pm.LabeledIntent;
+import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
@@ -13,7 +16,6 @@ import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import java.io.File;
 import java.io.IOException;
@@ -21,6 +23,7 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
     static final int REQUEST_IMAGE_CAPTURE = 1;
@@ -184,5 +187,27 @@ public class MainActivity extends AppCompatActivity {
             File[] fList = file.listFiles();
             fList[fList.length - 1].delete();
         }
+    }
+
+    public void shareFile(View v) {
+        Uri photoUri = FileProvider.getUriForFile(this, "com.comp7082.group1.assignment1", new File(photos.get(index)));
+        Intent shareIntent = new Intent();
+        shareIntent.setAction(Intent.ACTION_SEND);
+        shareIntent.putExtra(Intent.EXTRA_STREAM, photoUri);
+
+        PackageManager pm = getPackageManager();
+        List<ResolveInfo> resInfo = pm.queryIntentActivities(shareIntent, 0);
+        List<LabeledIntent> intentList = new ArrayList<LabeledIntent>();
+        for (int i = 0; i < resInfo.size(); i++) {
+            // Extract the label, append it, and repackage it in a LabeledIntent
+            ResolveInfo ri = resInfo.get(i);
+            String packageName = ri.activityInfo.packageName;
+            intentList.add(new LabeledIntent(shareIntent, packageName, ri.loadLabel(pm), ri.icon));
+        }
+        // convert intentList to array
+        LabeledIntent[] extraIntents = intentList.toArray( new LabeledIntent[ intentList.size() ]);
+        shareIntent.putExtra(Intent.EXTRA_INITIAL_INTENTS, extraIntents);
+        shareIntent.setType("image/jpg");
+        startActivity(Intent.createChooser(shareIntent, null));
     }
 }
