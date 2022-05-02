@@ -7,6 +7,11 @@ import androidx.core.content.FileProvider;
 import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.content.Context;
+import android.content.Intent;
+import android.content.pm.LabeledIntent;
+import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.graphics.BitmapFactory;
 import android.location.Location;
 import android.media.ExifInterface;
@@ -32,6 +37,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
     static final int REQUEST_IMAGE_CAPTURE = 1;
@@ -45,7 +51,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        photos = findPhotos(new Date(Long.MIN_VALUE), new Date(), "", null, null);
+        photos = findPhotos(new Date(Long.MIN_VALUE), new Date(), "", "", "");
 
 //        Initialize location service
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
@@ -58,12 +64,14 @@ public class MainActivity extends AppCompatActivity {
 
     public void getImageLocation(View view) {
         try {
-//            Toast.makeText(MainActivity.this, "path: " + photos.get(index), Toast.LENGTH_LONG).show();
             ExifInterface exif = new ExifInterface(photos.get(index));
-            Matcher matcher = Pattern.compile("\\d+").matcher(exif.getAttribute(ExifInterface.TAG_GPS_LATITUDE));
-            matcher.find();
-            int lat = Integer.valueOf(matcher.group());
-            Toast.makeText(MainActivity.this, "LAT: " + lat + "\nLNG: " + exif.getAttribute(ExifInterface.TAG_GPS_LONGITUDE), Toast.LENGTH_LONG).show();
+            Matcher matcherLat = Pattern.compile("\\d+").matcher(exif.getAttribute(ExifInterface.TAG_GPS_LATITUDE));
+            Matcher matcherLng = Pattern.compile("\\d+").matcher(exif.getAttribute(ExifInterface.TAG_GPS_LONGITUDE));
+            matcherLat.find();
+            matcherLng.find();
+            int lat = Integer.valueOf(matcherLat.group());
+            int lng = Integer.valueOf(matcherLng.group());
+            Toast.makeText(MainActivity.this, "LAT: " + lat + "\nLNG: " + lng, Toast.LENGTH_LONG).show();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -98,8 +106,8 @@ public class MainActivity extends AppCompatActivity {
 //                            Parse longtitude to GPS format (Degree / min / sec / E or W)
                             double lon = location.getLongitude();
                             double alon = Math.abs(lon);
-                            dms = Location.convert(alon, Location.FORMAT_SECONDS);
-                            splits = dms.split(":");
+                            String dms2 = Location.convert(alon, Location.FORMAT_SECONDS);
+                            splits = dms2.split(":");
                             secnds = (splits[2]).split("\\.");
                             if (secnds.length == 0) {
                                 seconds = splits[2];
@@ -157,7 +165,6 @@ public class MainActivity extends AppCompatActivity {
                         int imgLat = Integer.valueOf(matcherLat.group());
                         int imgLng = Integer.valueOf(matcherLng.group());
                         if (imgLat == Integer.valueOf(searchLat) && imgLng == Integer.valueOf(searchLng)) {
-//                            Toast.makeText(MainActivity.this, "photo found", Toast.LENGTH_LONG).show();
                             photos.add(f.getPath());
                         }
                     } else {
@@ -170,7 +177,7 @@ public class MainActivity extends AppCompatActivity {
             }
 
         } catch (Exception ex) {
-//            Crashes after photo taken
+//            Crashes after photo taken if no catch
         }
         return photos;
     }
@@ -258,6 +265,8 @@ public class MainActivity extends AppCompatActivity {
                 } catch (Exception ex) {
                     startTimestamp = null;
                     endTimestamp = null;
+                    searchLat = "";
+                    searchLng = "";
                 }
                 String keywords = (String) data.getStringExtra("KEYWORDS");
                 index = 0;
@@ -271,9 +280,12 @@ public class MainActivity extends AppCompatActivity {
         }
 
         if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK) {
+            index = photos.size();
             ImageView mImageView = (ImageView) findViewById(R.id.ivGallery);
             mImageView.setImageBitmap(BitmapFactory.decodeFile(mCurrentPhotoPath));
-            photos = findPhotos(new Date(Long.MIN_VALUE), new Date(), "", null, null);
+            photos = findPhotos(new Date(Long.MIN_VALUE), new Date(), "", "", "");
+
+            Toast.makeText(MainActivity.this, "size: " + photos.size() + "\n index: " + index, Toast.LENGTH_LONG).show();
         }
 
         // Deletes auto-generated image file if photo was not taken
@@ -283,5 +295,36 @@ public class MainActivity extends AppCompatActivity {
             File[] fList = file.listFiles();
             fList[fList.length - 1].delete();
         }
+    }
+
+    public void shareFile(View v) {
+        if (photos.size() == 0) {
+            Context context = getApplicationContext();
+            CharSequence text = "There is no photo to share. Please take a photo before sharing.";
+            int duration = Toast.LENGTH_SHORT;
+
+            Toast toast = Toast.makeText(context, text, duration);
+            toast.show();
+            return;
+        }
+        Uri photoUri = FileProvider.getUriForFile(this, "com.comp7082.group1.assignment1", new File(photos.get(index)));
+        Intent shareIntent = new Intent();
+        shareIntent.setAction(Intent.ACTION_SEND);
+        shareIntent.putExtra(Intent.EXTRA_STREAM, photoUri);
+
+        PackageManager pm = getPackageManager();
+        List<ResolveInfo> resInfo = pm.queryIntentActivities(shareIntent, 0);
+        List<LabeledIntent> intentList = new ArrayList<LabeledIntent>();
+        for (int i = 0; i < resInfo.size(); i++) {
+            // Extract the label, append it, and repackage it in a LabeledIntent
+            ResolveInfo ri = resInfo.get(i);
+            String packageName = ri.activityInfo.packageName;
+            intentList.add(new LabeledIntent(shareIntent, packageName, ri.loadLabel(pm), ri.icon));
+        }
+        // convert intentList to array
+        LabeledIntent[] extraIntents = intentList.toArray(new LabeledIntent[intentList.size()]);
+        shareIntent.putExtra(Intent.EXTRA_INITIAL_INTENTS, extraIntents);
+        shareIntent.setType("image/jpg");
+        startActivity(Intent.createChooser(shareIntent, null));
     }
 }

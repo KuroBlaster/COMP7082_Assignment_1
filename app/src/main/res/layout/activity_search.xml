@@ -60,7 +60,8 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Lat: "
-        android:textSize="24sp" />
+        android:textSize="24sp"
+        android:translationY="450px" />
 
     <TextView
         android:id="@+id/tvLng"
@@ -68,25 +69,28 @@
         android:layout_height="wrap_content"
         android:layout_alignStart="@+id/go"
         android:text="Lng: "
-        android:textSize="24sp" />
+        android:textSize="24sp"
+        android:translationY="450px" />
 
     <EditText
         android:id="@+id/etLat"
-        android:layout_width="125dp"
-        android:layout_height="34dp"
+        android:layout_width="109dp"
+        android:layout_height="wrap_content"
         android:layout_alignStart="@+id/go"
         android:layout_marginStart="-121dp"
         android:ems="10"
-        android:textSize="24sp" />
+        android:textSize="24sp"
+        android:translationY="450px" />
 
     <EditText
         android:id="@+id/etLng"
-        android:layout_width="125dp"
-        android:layout_height="34dp"
+        android:layout_width="123dp"
+        android:layout_height="wrap_content"
         android:layout_alignStart="@+id/tvLng"
         android:layout_marginStart="72dp"
         android:ems="10"
-        android:textSize="24sp" />
+        android:textSize="24sp"
+        android:translationY="450px" />
 
     <EditText
         android:id="@+id/etKeywords"
