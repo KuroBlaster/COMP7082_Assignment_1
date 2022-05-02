@@ -1,10 +1,15 @@
 package com.comp7082.group1.assignment1;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
 import androidx.core.content.FileProvider;
 
+import android.Manifest;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.BitmapFactory;
+import android.location.Location;
+import android.media.ExifInterface;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
@@ -15,12 +20,18 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.tasks.OnSuccessListener;
+
 import java.io.File;
 import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class MainActivity extends AppCompatActivity {
     static final int REQUEST_IMAGE_CAPTURE = 1;
@@ -28,12 +39,16 @@ public class MainActivity extends AppCompatActivity {
     String mCurrentPhotoPath;
     private ArrayList<String> photos = null;
     private int index = 0;
+    private FusedLocationProviderClient fusedLocationClient;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        photos = findPhotos(new Date(Long.MIN_VALUE), new Date(), "");
+        photos = findPhotos(new Date(Long.MIN_VALUE), new Date(), "", null, null);
+
+//        Initialize location service
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
         if (photos.size() == 0) {
             displayPhoto(null);
         } else {
@@ -41,7 +56,71 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    public void takePhoto(View v) {
+    public void getImageLocation(View view) {
+        try {
+//            Toast.makeText(MainActivity.this, "path: " + photos.get(index), Toast.LENGTH_LONG).show();
+            ExifInterface exif = new ExifInterface(photos.get(index));
+            Matcher matcher = Pattern.compile("\\d+").matcher(exif.getAttribute(ExifInterface.TAG_GPS_LATITUDE));
+            matcher.find();
+            int lat = Integer.valueOf(matcher.group());
+            Toast.makeText(MainActivity.this, "LAT: " + lat + "\nLNG: " + exif.getAttribute(ExifInterface.TAG_GPS_LONGITUDE), Toast.LENGTH_LONG).show();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void setLatLng(View view) {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            Toast.makeText(this, "Need to enable LOCATION ACCESS first in settings", Toast.LENGTH_LONG).show();
+            return;
+        }
+        fusedLocationClient.getLastLocation()
+                .addOnSuccessListener(this, new OnSuccessListener<Location>() {
+                    @Override
+                    public void onSuccess(Location location) {
+                        try {
+//                            Parse latitude to GPS format (Degree / min / sec / N or S)
+                            ExifInterface exif = new ExifInterface(photos.get(index));
+                            double lat = location.getLatitude();
+                            double alat = Math.abs(lat);
+                            String dms = Location.convert(alat, Location.FORMAT_SECONDS);
+                            String[] splits = dms.split(":");
+                            String[] secnds = (splits[2]).split("\\.");
+                            String seconds;
+                            if (secnds.length == 0) {
+                                seconds = splits[2];
+                            } else {
+                                seconds = secnds[0];
+                            }
+                            String latitudeStr = splits[0] + "/1," + splits[1] + "/1," + seconds + "/1";
+                            exif.setAttribute(ExifInterface.TAG_GPS_LATITUDE, latitudeStr);
+                            exif.setAttribute(ExifInterface.TAG_GPS_LATITUDE_REF, lat > 0 ? "N" : "S");
+//                            Parse longtitude to GPS format (Degree / min / sec / E or W)
+                            double lon = location.getLongitude();
+                            double alon = Math.abs(lon);
+                            dms = Location.convert(alon, Location.FORMAT_SECONDS);
+                            splits = dms.split(":");
+                            secnds = (splits[2]).split("\\.");
+                            if (secnds.length == 0) {
+                                seconds = splits[2];
+                            } else {
+                                seconds = secnds[0];
+                            }
+                            String longitudeStr = splits[0] + "/1," + splits[1] + "/1," + seconds + "/1";
+                            exif.setAttribute(ExifInterface.TAG_GPS_LONGITUDE, longitudeStr);
+                            exif.setAttribute(ExifInterface.TAG_GPS_LONGITUDE_REF, lon > 0 ? "E" : "W");
+
+                            exif.saveAttributes();
+
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                });
+    }
+
+    public void takePhoto(View v) throws IOException {
+
         Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
         if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
             File photoFile = null;
@@ -51,36 +130,53 @@ public class MainActivity extends AppCompatActivity {
                 // Error occurred while creating the File
             }
             // Continue only if the File was successfully created
-            if (photoFile != null) {
-                Uri photoURI = FileProvider.getUriForFile(this, "com.comp7082.group1.assignment1", photoFile);
-                takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI);
-                startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE);
-            }
+            Uri photoURI = FileProvider.getUriForFile(this, "com.comp7082.group1.assignment1", photoFile);
+            takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI);
+            startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE);
         }
+
     }
 
-    private ArrayList<String> findPhotos(Date startTimestamp, Date endTimestamp, String keywords) {
+
+    private ArrayList<String> findPhotos(Date startTimestamp, Date endTimestamp, String keywords, String searchLat, String searchLng) {
         File file = new File(Environment.getExternalStorageDirectory()
                 .getAbsolutePath(), "/Android/data/com.comp7082.group1.assignment1/files/Pictures");
         ArrayList<String> photos = new ArrayList<String>();
         File[] fList = file.listFiles();
+
         try {
             if (fList != null) {
                 for (File f : fList) {
-                    if (((startTimestamp == null && endTimestamp == null) || (f.lastModified() >= startTimestamp.getTime()
-                            && f.lastModified() <= endTimestamp.getTime())
-                    ) && (keywords == "" || f.getPath().contains(keywords)))
-                        photos.add(f.getPath());
+                    if (searchLat.length() != 0 && searchLng.length() != 0) {
+//                        Parse the GPS string
+                        ExifInterface exif = new ExifInterface(f.getAbsolutePath());
+                        Matcher matcherLat = Pattern.compile("\\d+").matcher(exif.getAttribute(ExifInterface.TAG_GPS_LATITUDE));
+                        Matcher matcherLng = Pattern.compile("\\d+").matcher(exif.getAttribute(ExifInterface.TAG_GPS_LONGITUDE));
+                        matcherLng.find();
+                        matcherLat.find();
+                        int imgLat = Integer.valueOf(matcherLat.group());
+                        int imgLng = Integer.valueOf(matcherLng.group());
+                        if (imgLat == Integer.valueOf(searchLat) && imgLng == Integer.valueOf(searchLng)) {
+//                            Toast.makeText(MainActivity.this, "photo found", Toast.LENGTH_LONG).show();
+                            photos.add(f.getPath());
+                        }
+                    } else {
+                        if (((startTimestamp == null && endTimestamp == null) || (f.lastModified() >= startTimestamp.getTime()
+                                && f.lastModified() <= endTimestamp.getTime())
+                        ) && (keywords == "" || f.getPath().contains(keywords)))
+                            photos.add(f.getPath());
+                    }
                 }
             }
-        } catch (Exception ex){
+
+        } catch (Exception ex) {
 //            Crashes after photo taken
         }
         return photos;
     }
 
     public void scrollPhotos(View v) {
-         switch (v.getId()) {
+        switch (v.getId()) {
             case R.id.btnPrev:
                 if (index > 0) {
                     index--;
@@ -151,18 +247,21 @@ public class MainActivity extends AppCompatActivity {
             if (resultCode == RESULT_OK) {
                 DateFormat format = new SimpleDateFormat("yyyy‐MM‐dd HH:mm:ss");
                 Date startTimestamp, endTimestamp;
+                String searchLat = null, searchLng = null;
                 try {
                     String from = (String) data.getStringExtra("STARTTIMESTAMP");
                     String to = (String) data.getStringExtra("ENDTIMESTAMP");
                     startTimestamp = format.parse(from);
                     endTimestamp = format.parse(to);
+                    searchLat = (String) data.getStringExtra("LAT");
+                    searchLng = (String) data.getStringExtra("LNG");
                 } catch (Exception ex) {
                     startTimestamp = null;
                     endTimestamp = null;
                 }
                 String keywords = (String) data.getStringExtra("KEYWORDS");
                 index = 0;
-                photos = findPhotos(startTimestamp, endTimestamp, keywords);
+                photos = findPhotos(startTimestamp, endTimestamp, keywords, searchLat, searchLng);
                 if (photos.size() == 0) {
                     displayPhoto(null);
                 } else {
@@ -174,7 +273,7 @@ public class MainActivity extends AppCompatActivity {
         if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK) {
             ImageView mImageView = (ImageView) findViewById(R.id.ivGallery);
             mImageView.setImageBitmap(BitmapFactory.decodeFile(mCurrentPhotoPath));
-            photos = findPhotos(new Date(Long.MIN_VALUE), new Date(), "");
+            photos = findPhotos(new Date(Long.MIN_VALUE), new Date(), "", null, null);
         }
 
         // Deletes auto-generated image file if photo was not taken

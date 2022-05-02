@@ -94,4 +94,43 @@
         android:text="search"
         tools:layout_editor_absoluteX="291dp"
         tools:layout_editor_absoluteY="635dp" />
+
+    <Button
+        android:id="@+id/getLocation"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignStart="@+id/ivGallery"
+        android:layout_alignParentBottom="true"
+        android:layout_marginStart="1dp"
+        android:layout_marginBottom="102dp"
+        android:onClick="getImageLocation"
+        android:text="ImgLocation"
+        tools:layout_editor_absoluteX="291dp"
+        tools:layout_editor_absoluteY="635dp" />
+
+<!--    <Button-->
+<!--        android:id="@+id/setLatLng"-->
+<!--        android:layout_width="wrap_content"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        android:layout_alignStart="@+id/ivGallery"-->
+<!--        android:layout_alignParentBottom="true"-->
+<!--        android:layout_marginStart="273dp"-->
+<!--        android:layout_marginBottom="102dp"-->
+<!--        android:onClick="setLatLng"-->
+<!--        android:text="Set"-->
+<!--        tools:layout_editor_absoluteX="291dp"-->
+<!--        tools:layout_editor_absoluteY="635dp" />-->
+
+    <Button
+        android:id="@+id/setLocation"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignStart="@+id/ivGallery"
+        android:layout_alignParentBottom="true"
+        android:layout_marginStart="237dp"
+        android:layout_marginBottom="104dp"
+        android:onClick="setLatLng"
+        android:text="Set LatLng"
+        tools:layout_editor_absoluteX="291dp"
+        tools:layout_editor_absoluteY="635dp" />
 </RelativeLayout>

@@ -55,6 +55,39 @@
         android:text="Keywords: "
         android:textSize="24sp" />
 
+    <TextView
+        android:id="@+id/tvLat"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Lat: "
+        android:textSize="24sp" />
+
+    <TextView
+        android:id="@+id/tvLng"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignStart="@+id/go"
+        android:text="Lng: "
+        android:textSize="24sp" />
+
+    <EditText
+        android:id="@+id/etLat"
+        android:layout_width="125dp"
+        android:layout_height="34dp"
+        android:layout_alignStart="@+id/go"
+        android:layout_marginStart="-121dp"
+        android:ems="10"
+        android:textSize="24sp" />
+
+    <EditText
+        android:id="@+id/etLng"
+        android:layout_width="125dp"
+        android:layout_height="34dp"
+        android:layout_alignStart="@+id/tvLng"
+        android:layout_marginStart="72dp"
+        android:ems="10"
+        android:textSize="24sp" />
+
     <EditText
         android:id="@+id/etKeywords"
         android:layout_width="wrap_content"
