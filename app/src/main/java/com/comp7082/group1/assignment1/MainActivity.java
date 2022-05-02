@@ -3,6 +3,7 @@ package com.comp7082.group1.assignment1;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.FileProvider;
 
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.LabeledIntent;
 import android.content.pm.PackageManager;
@@ -16,6 +17,7 @@ import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.io.File;
 import java.io.IOException;
@@ -190,6 +192,15 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void shareFile(View v) {
+        if (photos.size() == 0) {
+            Context context = getApplicationContext();
+            CharSequence text = "There is no photo to share. Please take a photo before sharing.";
+            int duration = Toast.LENGTH_SHORT;
+
+            Toast toast = Toast.makeText(context, text, duration);
+            toast.show();
+            return;
+        }
         Uri photoUri = FileProvider.getUriForFile(this, "com.comp7082.group1.assignment1", new File(photos.get(index)));
         Intent shareIntent = new Intent();
         shareIntent.setAction(Intent.ACTION_SEND);
