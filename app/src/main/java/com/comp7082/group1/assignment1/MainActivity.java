@@ -210,15 +210,31 @@ public class MainActivity extends AppCompatActivity {
         ImageView iv = (ImageView) findViewById(R.id.ivGallery);
         TextView tv = (TextView) findViewById(R.id.tvTimestamp);
         EditText et = (EditText) findViewById(R.id.etCaption);
+        TextView latlong = (TextView) findViewById(R.id.latlong);
+
         if (path == null || path == "") {
             iv.setImageResource(R.mipmap.ic_launcher);
             et.setText("Description");
             tv.setText("Date and time");
+            latlong.setText("LAT: LNG:");
         } else {
             iv.setImageBitmap(BitmapFactory.decodeFile(path));
             String[] attr = path.split("_");
             tv.setText("Date: " + attr[1] + " Time: " + attr[2]);
             et.setText(attr[3]);
+
+           // try {
+           //     ExifInterface exif = new ExifInterface(photos.get(index));
+           //     Matcher matcherLat = Pattern.compile("\\d+").matcher(exif.getAttribute(ExifInterface.TAG_GPS_LATITUDE));
+           //     Matcher matcherLng = Pattern.compile("\\d+").matcher(exif.getAttribute(ExifInterface.TAG_GPS_LONGITUDE));
+           //     matcherLat.find();
+           //     matcherLng.find();//    int lat = Integer.valueOf(matcherLat.group());
+           //     int lng = Integer.valueOf(matcherLng.group());
+                latlong.setText("LAT: LNG: ");
+                //Toast.makeText(MainActivity.this, "LAT: " + lat + "\nLNG: " + lng, Toast.LENGTH_LONG).show();
+            //} catch (IOException e) {
+            //    e.printStackTrace();
+            //}
         }
     }
 
