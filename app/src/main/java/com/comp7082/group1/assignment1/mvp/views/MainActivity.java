@@ -1,4 +1,4 @@
-package com.comp7082.group1.assignment1;
+package com.comp7082.group1.assignment1.mvp.views;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
@@ -8,10 +8,9 @@ import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.Context;
-import android.content.Intent;
 import android.content.pm.LabeledIntent;
-import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
+import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.location.Location;
 import android.media.ExifInterface;
@@ -25,6 +24,8 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.comp7082.group1.assignment1.R;
+import com.comp7082.group1.assignment1.mvp.presenters.GalleryPresenter;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -39,19 +40,21 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.List;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements GalleryPresenter.View, View.OnClickListener {
     static final int REQUEST_IMAGE_CAPTURE = 1;
     static final int SEARCH_ACTIVITY_REQUEST_CODE = 2;
     String mCurrentPhotoPath;
     private ArrayList<String> photos = null;
     private int index = 0;
     private FusedLocationProviderClient fusedLocationClient;
+    GalleryPresenter presenter = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         photos = findPhotos(new Date(Long.MIN_VALUE), new Date(), "", "", "");
+        presenter = new GalleryPresenter(this);
 
 //        Initialize location service
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
@@ -128,6 +131,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void takePhoto(View v) throws IOException {
+        //presenter.takePhoto(); - todo move code below into presenter and then call it from here
 
         Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
         if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
@@ -266,6 +270,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+        //presenter.onReturn(requestCode, resultCode, data); todo: move code below in presenter and then use the call
         if (requestCode == SEARCH_ACTIVITY_REQUEST_CODE) {
             if (resultCode == RESULT_OK) {
                 DateFormat format = new SimpleDateFormat("yyyy‐MM‐dd HH:mm:ss");
@@ -343,4 +348,34 @@ public class MainActivity extends AppCompatActivity {
         shareIntent.setType("image/jpg");
         startActivity(Intent.createChooser(shareIntent, null));
     }
+
+    public void onClick(View v) {
+        String caption = ((EditText) findViewById(R.id.etCaption)).getText().toString();
+        switch (v.getId()) {
+            case R.id.btnPrev:
+                presenter.handleNavigationInput("ScrollLeft", caption);
+                break;
+            case R.id.btnNext:
+                presenter.handleNavigationInput("ScrollRight", caption);
+                break;
+            default:
+                break;
+        }
+    }
+
+    private View.OnClickListener searchListener = new View.OnClickListener() {
+        public void onClick(View v) {
+            presenter.search();
+        }
+    };
+
+    @Override
+    public void displayPhoto(Bitmap photo, String caption, String timestamp, boolean isFirst, boolean isLast) {
+
+    }
+    public void uploadPhoto(View v) {
+    }
+    public void editSettings(View v) {
+    }
+
 }

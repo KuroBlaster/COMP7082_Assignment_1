@@ -1,7 +1,10 @@
-package com.comp7082.group1.assignment1;
+package com.comp7082.group1.assignment1.mvp.views;
 import androidx.appcompat.app.AppCompatActivity;
 import android.content.Intent; import android.os.Bundle;
 import android.view.View; import android.widget.EditText;
+
+import com.comp7082.group1.assignment1.R;
+
 import java.text.DateFormat; import java.text.SimpleDateFormat;
 import java.util.Calendar; import java.util.Date;
 import java.util.Locale;
