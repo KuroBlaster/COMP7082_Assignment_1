@@ -72,7 +72,7 @@ public class MainActivity extends AppCompatActivity {
             int lat = Integer.valueOf(matcherLat.group());
             int lng = Integer.valueOf(matcherLng.group());
             Toast.makeText(MainActivity.this, "LAT: " + lat + "\nLNG: " + lng, Toast.LENGTH_LONG).show();
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
@@ -120,7 +120,7 @@ public class MainActivity extends AppCompatActivity {
 
                             exif.saveAttributes();
 
-                        } catch (IOException e) {
+                        } catch (Exception e) {
                             e.printStackTrace();
                         }
                     }
