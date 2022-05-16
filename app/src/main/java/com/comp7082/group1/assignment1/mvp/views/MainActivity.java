@@ -30,8 +30,11 @@ import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.tasks.OnSuccessListener;
 
+import java.io.BufferedOutputStream;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -41,30 +44,36 @@ import java.util.regex.Pattern;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity implements GalleryPresenter.View, View.OnClickListener {
-    static final int REQUEST_IMAGE_CAPTURE = 1;
+//    static final int REQUEST_IMAGE_CAPTURE = 1;
     static final int SEARCH_ACTIVITY_REQUEST_CODE = 2;
+    /* moved to presenters
     String mCurrentPhotoPath;
     private ArrayList<String> photos = null;
     private int index = 0;
     private FusedLocationProviderClient fusedLocationClient;
+     */
     GalleryPresenter presenter = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        photos = findPhotos(new Date(Long.MIN_VALUE), new Date(), "", "", "");
         presenter = new GalleryPresenter(this);
+        displayPhoto(presenter.getPhotoBitmap(), presenter.getCaption(), presenter.getTimestamp(), presenter.isFirst(), presenter.isLast());
 
 //        Initialize location service
-        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
+ // moved to presenter
+        // fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
+        /* using the new function instead
         if (photos.size() == 0) {
             displayPhoto(null);
+            presenter.
         } else {
             displayPhoto(photos.get(index));
         }
+         */
     }
-
+/* todo move to presenter
     public void getImageLocation(View view) {
         try {
             ExifInterface exif = new ExifInterface(photos.get(index));
@@ -130,9 +139,10 @@ public class MainActivity extends AppCompatActivity implements GalleryPresenter.
                 });
     }
 
+ */
     public void takePhoto(View v) throws IOException {
-        //presenter.takePhoto(); - todo move code below into presenter and then call it from here
-
+        presenter.takePhoto();
+/* moved to presenter.takePhoto();
         Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
         if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
             File photoFile = null;
@@ -146,10 +156,10 @@ public class MainActivity extends AppCompatActivity implements GalleryPresenter.
             takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI);
             startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE);
         }
-
+*/
     }
 
-
+/* moved to presenter, models
     private ArrayList<String> findPhotos(Date startTimestamp, Date endTimestamp, String keywords, String searchLat, String searchLng) {
         File file = new File(Environment.getExternalStorageDirectory()
                 .getAbsolutePath(), "/Android/data/com.comp7082.group1.assignment1/files/Pictures");
@@ -185,31 +195,21 @@ public class MainActivity extends AppCompatActivity implements GalleryPresenter.
         }
         return photos;
     }
-
+*/
     public void scrollPhotos(View v) {
         switch (v.getId()) {
             case R.id.btnPrev:
-                if (index > 0) {
-                    index--;
-                    updatePhoto(photos.get(index), ((EditText) findViewById(R.id.etCaption)).getText().toString());
-                }
+                    presenter.handleNavigationInput("prev", ((EditText) findViewById(R.id.etCaption)).getText().toString());
                 break;
             case R.id.btnNext:
-                if (index < (photos.size() - 1)) {
-                    index++;
-                    updatePhoto(photos.get(index), ((EditText) findViewById(R.id.etCaption)).getText().toString());
-                }
+                    presenter.handleNavigationInput("next", ((EditText) findViewById(R.id.etCaption)).getText().toString());
                 break;
             default:
                 break;
         }
-        if (photos.size() == 0) {
-            displayPhoto(null);
-        } else {
-            displayPhoto(photos.get(index));
-        }
+        displayPhoto(presenter.getPhotoBitmap(), presenter.getCaption(), presenter.getTimestamp(), presenter.isFirst(), presenter.isLast());
     }
-
+/* moved into the new function below
     private void displayPhoto(String path) {
         ImageView iv = (ImageView) findViewById(R.id.ivGallery);
         TextView tv = (TextView) findViewById(R.id.tvTimestamp);
@@ -242,6 +242,8 @@ public class MainActivity extends AppCompatActivity implements GalleryPresenter.
         }
     }
 
+ */
+/* moved to presenters class
     private File createImageFile() throws IOException {
 // Create an image file name
         String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
@@ -252,6 +254,7 @@ public class MainActivity extends AppCompatActivity implements GalleryPresenter.
         return image;
     }
 
+//moved to models
     private void updatePhoto(String path, String caption) {
         String[] attr = path.split("_");
         if (attr.length >= 4) {
@@ -261,7 +264,7 @@ public class MainActivity extends AppCompatActivity implements GalleryPresenter.
             photos.set(index, attr[0] + "_" + attr[1] + "_" + attr[2] + "_" + caption + "_" + attr[4]);
         }
     }
-
+*/
     public void launchSearchActivity(View view) {
         Intent i = new Intent(this, SearchActivity.class);
         startActivityForResult(i, SEARCH_ACTIVITY_REQUEST_CODE);
@@ -270,7 +273,10 @@ public class MainActivity extends AppCompatActivity implements GalleryPresenter.
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        //presenter.onReturn(requestCode, resultCode, data); todo: move code below in presenter and then use the call
+        presenter.onReturn(requestCode, resultCode, data);
+        displayPhoto(presenter.getPhotoBitmap(), presenter.getCaption(), presenter.getTimestamp(), presenter.isFirst(), presenter.isLast());
+
+        /* moved to presenter.onReturn();
         if (requestCode == SEARCH_ACTIVITY_REQUEST_CODE) {
             if (resultCode == RESULT_OK) {
                 DateFormat format = new SimpleDateFormat("yyyy‐MM‐dd HH:mm:ss");
@@ -316,10 +322,11 @@ public class MainActivity extends AppCompatActivity implements GalleryPresenter.
             File[] fList = file.listFiles();
             fList[fList.length - 1].delete();
         }
+         */
     }
 
     public void shareFile(View v) {
-        if (photos.size() == 0) {
+        if (presenter.isEmpty()) {
             Context context = getApplicationContext();
             CharSequence text = "There is no photo to share. Please take a photo before sharing.";
             int duration = Toast.LENGTH_SHORT;
@@ -328,7 +335,17 @@ public class MainActivity extends AppCompatActivity implements GalleryPresenter.
             toast.show();
             return;
         }
-        Uri photoUri = FileProvider.getUriForFile(this, "com.comp7082.group1.assignment1", new File(photos.get(index)));
+        File outputDir = getCacheDir(); // context being the Activity pointer
+        File outputFile;
+        try {
+            outputFile = File.createTempFile(presenter.getCaption()+presenter.getTimestamp(), ".jpg", outputDir);
+            OutputStream os = new BufferedOutputStream(new FileOutputStream(outputFile));
+            presenter.getPhotoBitmap().compress(Bitmap.CompressFormat.JPEG, 100, os);
+            os.close();
+
+        Uri photoUri = FileProvider.getUriForFile(this, "com.comp7082.group1.assignment1", outputFile);
+        //Uri photoUri = FileProvider.getUriForFile(this, "com.comp7082.group1.assignment1", outputFile);
+       //     this,"com.wow.fileprovider", newFile
         Intent shareIntent = new Intent();
         shareIntent.setAction(Intent.ACTION_SEND);
         shareIntent.putExtra(Intent.EXTRA_STREAM, photoUri);
@@ -347,6 +364,9 @@ public class MainActivity extends AppCompatActivity implements GalleryPresenter.
         shareIntent.putExtra(Intent.EXTRA_INITIAL_INTENTS, extraIntents);
         shareIntent.setType("image/jpg");
         startActivity(Intent.createChooser(shareIntent, null));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public void onClick(View v) {
@@ -371,6 +391,25 @@ public class MainActivity extends AppCompatActivity implements GalleryPresenter.
 
     @Override
     public void displayPhoto(Bitmap photo, String caption, String timestamp, boolean isFirst, boolean isLast) {
+        //todo check if there is any photo to display, if PhotoBitmap is not null. If so carry on:
+
+        ImageView iv = (ImageView) findViewById(R.id.ivGallery);
+        TextView tv = (TextView) findViewById(R.id.tvTimestamp);
+        EditText et = (EditText) findViewById(R.id.etCaption);
+        TextView latlong = (TextView) findViewById(R.id.latlong);
+
+        if (photo == null) {
+            iv.setImageResource(R.mipmap.ic_launcher);
+            et.setText("Description");
+            tv.setText("Date and time");
+            latlong.setText("LAT: LNG:");
+        } else {
+            iv.setImageBitmap(photo);
+            tv.setText("Timestamp: " + timestamp);
+            et.setText(caption);
+            //todo below can be improved to show lat long
+            //latlong.setText("LAT: LNG: ");
+        }
 
     }
     public void uploadPhoto(View v) {
