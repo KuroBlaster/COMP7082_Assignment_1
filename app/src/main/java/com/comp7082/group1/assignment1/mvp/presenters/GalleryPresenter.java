@@ -2,20 +2,27 @@ package com.comp7082.group1.assignment1.mvp.presenters;
 
 
 
+import android.Manifest;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
+import android.location.Location;
+import android.media.ExifInterface;
 import android.net.Uri;
 import android.provider.MediaStore;
 import android.os.Environment;
+import android.widget.Toast;
 
+import androidx.core.app.ActivityCompat;
 import androidx.core.content.FileProvider;
 
 import com.comp7082.group1.assignment1.mvp.models.Photo;
 import com.comp7082.group1.assignment1.mvp.models.PhotoRepository;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.tasks.OnSuccessListener;
 
 import java.io.File;
 import java.io.IOException;
@@ -23,6 +30,8 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class GalleryPresenter {
     static final int REQUEST_IMAGE_CAPTURE = 1;
@@ -112,8 +121,17 @@ public class GalleryPresenter {
     }
 
     public void handleNavigationInput(String navigationAction, String caption)  {
-        photos.get(index).updateCaption(caption);
-        photos = repository.findPhotos(new Date(Long.MIN_VALUE), new Date(), "", "", "");
+        if (photos.isEmpty()) return;
+        if (!photos.get(index).getCaption().equalsIgnoreCase(caption)) {
+            photos.get(index).updateCaption(caption);
+            //if we update caption we have to re-read the photos, as in this version is still using
+            // the filename as caption storage and file system.
+            // this can change when using a DB for storage.
+            // with this design we loose a filtering, if the cation update was done on a filtered (after search) set.
+            // Future Improvement opportunities here.
+            photos = repository.findPhotos(new Date(Long.MIN_VALUE), new Date(), "", "", "");
+        }
+
         if (navigationAction.equalsIgnoreCase("next") && !isLast()) {
             index++;
         } else if (navigationAction.equalsIgnoreCase("prev") && !isFirst()) {
@@ -122,23 +140,38 @@ public class GalleryPresenter {
     }
 
     public Bitmap getPhotoBitmap() {
-        return photos.get(index).getBitmap();
+        if (photos.isEmpty()) {
+            return null;
+        } else
+            return photos.get(index).getBitmap();
     }
 
     public String getCaption() {
+        if (photos.isEmpty()) {
+            return null;
+        } else
         return photos.get(index).getCaption();
     }
 
     public String getTimestamp() {
-        return photos.get(index).getTimestamp();
+        if (photos.isEmpty()) {
+            return null;
+        } else
+            return photos.get(index).getTimestamp();
     }
 
     public String getDate() {
-        return photos.get(index).getDate();
+        if (photos.isEmpty()) {
+            return null;
+        } else
+            return photos.get(index).getDate();
     }
 
     public String getTime() {
-        return photos.get(index).getTime();
+        if (photos.isEmpty()) {
+            return null;
+        } else
+            return photos.get(index).getTime();
     }
     public boolean isFirst() {
         return (index <= 0) ? true : false;
@@ -151,35 +184,61 @@ public class GalleryPresenter {
     public boolean isEmpty() {
         return photos.isEmpty();
     }
-    /* todo implement the location here in presenter
-    public void getImageLocation(View view) {
+
+    public String getImageLocation() {
+        String location="LAT: " + "\nLNG: ";
         try {
-            ExifInterface exif = new ExifInterface(photos.get(index));
+            ExifInterface exif = new ExifInterface(photos.get(index).getPhotoFile().getAbsolutePath());
             Matcher matcherLat = Pattern.compile("\\d+").matcher(exif.getAttribute(ExifInterface.TAG_GPS_LATITUDE));
             Matcher matcherLng = Pattern.compile("\\d+").matcher(exif.getAttribute(ExifInterface.TAG_GPS_LONGITUDE));
             matcherLat.find();
             matcherLng.find();
             int lat = Integer.valueOf(matcherLat.group());
             int lng = Integer.valueOf(matcherLng.group());
-            Toast.makeText(MainActivity.this, "LAT: " + lat + "\nLNG: " + lng, Toast.LENGTH_LONG).show();
+            //Toast.makeText(MainActivity.this, "LAT: " + lat + "\nLNG: " + lng, Toast.LENGTH_LONG).show();
+            location =  "LAT: " + lat + "\nLNG: " + lng;
         } catch (Exception e) {
             e.printStackTrace();
         }
+        return location;
     }
 
-
-    public void setLatLng(View view) {
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            Toast.makeText(this, "Need to enable LOCATION ACCESS first in settings", Toast.LENGTH_LONG).show();
+    /*
+    This may be needed as now the app relies on some other app getting the location via getLastLocation
+    if no other app got the location this app cannot get it.
+    room for enhancement here.
+    private Location getLastKnownLocation() {
+        Location l=null;
+        LocationManager mLocationManager = (LocationManager)getApplicationContext().getSystemService(LOCATION_SERVICE);
+        List<String> providers = mLocationManager.getProviders(true);
+        Location bestLocation = null;
+        for (String provider : providers) {
+            if(ContextCompat.checkSelfPermission(this,Manifest.permission.ACCESS_FINE_LOCATION)==PackageManager.PERMISSION_GRANTED) {
+                l = mLocationManager.getLastKnownLocation(provider);
+            }
+            if (l == null) {
+                continue;
+            }
+            if (bestLocation == null || l.getAccuracy() < bestLocation.getAccuracy()) {
+                bestLocation = l;
+            }
+        }
+        return bestLocation;
+    }
+    */
+    public void setLatLng() {
+        //setting location
+        if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            Toast.makeText(context, "Need to enable LOCATION ACCESS first in settings", Toast.LENGTH_LONG).show();
             return;
         }
         fusedLocationClient.getLastLocation()
-                .addOnSuccessListener(this, new OnSuccessListener<Location>() {
+                .addOnSuccessListener(context, new OnSuccessListener<Location>() {
                     @Override
                     public void onSuccess(Location location) {
                         try {
 //                            Parse latitude to GPS format (Degree / min / sec / N or S)
-                            ExifInterface exif = new ExifInterface(photos.get(index));
+                            ExifInterface exif = new ExifInterface(photos.get(index).getPhotoFile().getAbsolutePath());
                             double lat = location.getLatitude();
                             double alat = Math.abs(lat);
                             String dms = Location.convert(alat, Location.FORMAT_SECONDS);
@@ -218,7 +277,6 @@ public class GalleryPresenter {
                 });
     }
 
-*/
 
     public interface View {
         public void displayPhoto(Bitmap photo, String caption, String timestamp, boolean isFirst, boolean isLast);

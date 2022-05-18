@@ -73,8 +73,11 @@ public class MainActivity extends AppCompatActivity implements GalleryPresenter.
         }
          */
     }
-/* todo move to presenter
+
     public void getImageLocation(View view) {
+        String location = presenter.getImageLocation();
+        Toast.makeText(MainActivity.this, location, Toast.LENGTH_LONG).show();
+        /* moved to presenter
         try {
             ExifInterface exif = new ExifInterface(photos.get(index));
             Matcher matcherLat = Pattern.compile("\\d+").matcher(exif.getAttribute(ExifInterface.TAG_GPS_LATITUDE));
@@ -87,9 +90,14 @@ public class MainActivity extends AppCompatActivity implements GalleryPresenter.
         } catch (Exception e) {
             e.printStackTrace();
         }
+
+         */
     }
 
     public void setLatLng(View view) {
+        presenter.setLatLng();
+    }
+        /* moved to presenter
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             Toast.makeText(this, "Need to enable LOCATION ACCESS first in settings", Toast.LENGTH_LONG).show();
             return;

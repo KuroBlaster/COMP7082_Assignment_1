@@ -13,7 +13,7 @@ public class Photo {
         this.photoFile = photoFile;
         photoPath = photoFile.getAbsolutePath();
     }
-    public File getPhotoFile() { return null;}
+    public File getPhotoFile() { return photoFile;}
 
     public String getTimestamp() {
         /* Below are just for reference:
