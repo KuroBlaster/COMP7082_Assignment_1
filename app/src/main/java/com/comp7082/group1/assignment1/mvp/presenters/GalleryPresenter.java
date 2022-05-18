@@ -6,7 +6,9 @@ import android.Manifest;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.LabeledIntent;
 import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.graphics.Bitmap;
 import android.location.Location;
 import android.media.ExifInterface;
@@ -30,6 +32,7 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -276,6 +279,28 @@ public class GalleryPresenter {
                     }
                 });
     }
+
+    public void shareFile() {
+        Uri photoUri = FileProvider.getUriForFile(context, "com.comp7082.group1.assignment1", photos.get(index).getPhotoFile());
+        Intent shareIntent = new Intent();
+        shareIntent.setAction(Intent.ACTION_SEND);
+        shareIntent.putExtra(Intent.EXTRA_STREAM, photoUri);
+
+        PackageManager pm = context.getPackageManager();
+        List<ResolveInfo> resInfo = pm.queryIntentActivities(shareIntent, 0);
+        List<LabeledIntent> intentList = new ArrayList<LabeledIntent>();
+        for (int i = 0; i < resInfo.size(); i++) {
+            // Extract the label, append it, and repackage it in a LabeledIntent
+            ResolveInfo ri = resInfo.get(i);
+            String packageName = ri.activityInfo.packageName;
+            intentList.add(new LabeledIntent(shareIntent, packageName, ri.loadLabel(pm), ri.icon));
+        }
+        // convert intentList to array
+        LabeledIntent[] extraIntents = intentList.toArray(new LabeledIntent[intentList.size()]);
+        shareIntent.putExtra(Intent.EXTRA_INITIAL_INTENTS, extraIntents);
+        shareIntent.setType("image/jpg");
+        context.startActivity(Intent.createChooser(shareIntent, null));
+}
 
 
     public interface View {

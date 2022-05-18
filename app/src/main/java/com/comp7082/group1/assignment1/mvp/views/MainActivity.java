@@ -343,17 +343,10 @@ public class MainActivity extends AppCompatActivity implements GalleryPresenter.
             toast.show();
             return;
         }
-        File outputDir = getCacheDir(); // context being the Activity pointer
-        File outputFile;
-        try {
-            outputFile = File.createTempFile(presenter.getCaption()+presenter.getTimestamp(), ".jpg", outputDir);
-            OutputStream os = new BufferedOutputStream(new FileOutputStream(outputFile));
-            presenter.getPhotoBitmap().compress(Bitmap.CompressFormat.JPEG, 100, os);
-            os.close();
+        presenter.shareFile();
+        /* moved to presenter
 
-        Uri photoUri = FileProvider.getUriForFile(this, "com.comp7082.group1.assignment1", outputFile);
-        //Uri photoUri = FileProvider.getUriForFile(this, "com.comp7082.group1.assignment1", outputFile);
-       //     this,"com.wow.fileprovider", newFile
+        Uri photoUri = FileProvider.getUriForFile(this, "com.comp7082.group1.assignment1", new File(photos.get(index)));
         Intent shareIntent = new Intent();
         shareIntent.setAction(Intent.ACTION_SEND);
         shareIntent.putExtra(Intent.EXTRA_STREAM, photoUri);
@@ -375,6 +368,8 @@ public class MainActivity extends AppCompatActivity implements GalleryPresenter.
         } catch (IOException e) {
             e.printStackTrace();
         }
+
+         */
     }
 
     public void onClick(View v) {
